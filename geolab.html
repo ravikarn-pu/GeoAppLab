@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Build Workbook - GeoAI Bootcamp</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Sarabun', sans-serif;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <header class="bg-slate-900 text-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <div class="flex items-center gap-3">
+                    <div class="bg-emerald-500 p-2 rounded-lg text-slate-900 font-bold text-xl">
+                        <i class="fa-solid fa-earth-americas"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold tracking-tight text-emerald-400">AI Build Workbook</h1>
+                        <p class="text-xs text-slate-400">Build Your Own Mini LandQ with AI</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex-1 max-w-md w-full md:text-right">
+                <p class="text-sm text-slate-300 font-medium mb-1">
+                    <i class="fa-solid fa-graduation-cap text-emerald-400 mr-1"></i> เรียนรู้การสร้าง Web GIS Dashboard ด้วย AI ภายใน 30 นาที
+                </p>
+                <div class="w-full bg-slate-700 rounded-full h-2.5 overflow-hidden">
+                    <div id="progressBar" class="bg-emerald-500 h-2.5 transition-all duration-300" style="width: 14.28%"></div>
+                </div>
+                <div class="flex justify-between text-xs text-slate-400 mt-1">
+                    <span>Progress</span>
+                    <span id="progressText">Step 1 / 7 (14%)</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 w-full">
+        
+        <aside class="lg:col-span-3 bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col gap-2 h-fit">
+            <h2 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2 px-2">Workshop Workflow</h2>
+            <nav class="flex flex-col gap-1" id="sidebarSteps">
+                </nav>
+        </aside>
+
+        <section class="lg:col-span-5 flex flex-col gap-6">
+            
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex flex-col flex-1 min-h-[500px]">
+                <div id="stepContent">
+                    </div>
+                
+                <div class="mt-auto pt-6 border-t border-slate-100 flex justify-between items-center">
+                    <button id="btnPrev" onclick="changeStep(currentStep - 1)" class="px-4 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fa-solid fa-arrow-left mr-1"></i> ย้อนกลับ
+                    </button>
+                    <button id="btnNext" onclick="changeStep(currentStep + 1)" class="px-5 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition shadow-sm">
+                        ถัดไป <i class="fa-solid fa-arrow-right ml-1"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section class="lg:col-span-4 bg-slate-900 text-slate-100 p-4 rounded-xl shadow-md border border-slate-800 flex flex-col h-[calc(100vh-120px)] sticky top-24">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-3">
+                <div class="flex items-center gap-2">
+                    <span class="flex h-3 w-3 relative">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                    </span>
+                    <h3 class="font-bold text-sm tracking-wide text-slate-300">MINI LANDQ PREVIEW</h3>
+                </div>
+                <span class="text-xs bg-slate-800 text-emerald-400 px-2 py-0.5 rounded-full font-mono">Target App</span>
+            </div>
+
+            <div class="flex-1 flex flex-col gap-3 overflow-y-auto custom-scrollbar text-xs">
+                
+                <div id="mockupLayout" class="bg-slate-800 p-2 rounded-lg border border-slate-700 opacity-40 transition-all duration-300">
+                    <div class="flex items-center justify-between border-b border-slate-700 pb-1.5 mb-1.5">
+                        <span class="font-bold text-emerald-400 text-[10px]"><i class="fa-solid fa-wheat-awn mr-1"></i> Agri-LandQ</span>
+                        <div class="flex gap-1">
+                            <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                            <span class="w-2 h-2 rounded-full bg-yellow-500"></span>
+                            <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-4 gap-2">
+                        <div class="col-span-1 bg-slate-750 p-1.5 rounded text-[9px] text-slate-400 flex flex-col gap-1 border border-slate-700/50">
+                            <span class="text-white font-medium"><i class="fa-solid fa-bars mr-1"></i> เมนูหลัก</span>
+                            <span>• ภาพรวมแปลง</span>
+                            <span>• วิเคราะห์ NDVI</span>
+                            <span>• รายงานสรุป</span>
+                        </div>
+                        <div class="col-span-3 text-[10px] flex items-center justify-center text-slate-500 italic py-2">
+                            Dashboard Area Ready
+                        </div>
+                    </div>
+                </div>
+
+                <div id="mockupMapContainer" class="bg-slate-800 p-2 rounded-lg border border-slate-700 opacity-40 transition-all duration-300 flex flex-col gap-1.5">
+                    <span class="font-semibold text-slate-300"><i class="fa-solid fa-map-location-dot text-emerald-400 mr-1"></i> แผนที่แปลงเกษตรจำลอง (Leaflet GIS)</span>
+                    <div id="mockMap" class="h-32 rounded bg-slate-950 border border-slate-700 z-0"></div>
+                </div>
+
+                <div id="mockupKPI" class="grid grid-cols-2 gap-2 opacity-40 transition-all duration-300">
+                    <div class="bg-slate-800 p-2 rounded-lg border border-slate-700">
+                        <div class="text-slate-400 text-[10px]">พื้นที่เพาะปลูก ทั้งหมด</div>
+                        <div class="text-base font-bold text-white">1,240 ไร่</div>
+                    </div>
+                    <div class="bg-slate-800 p-2 rounded-lg border border-slate-700">
+                        <div class="text-slate-400 text-[10px]">ค่าเฉลี่ย NDVI สะสม</div>
+                        <div class="text-base font-bold text-emerald-400">0.68 <span class="text-[10px] text-slate-400 font-normal">(ปกติ)</span></div>
+                    </div>
+                    <div class="bg-slate-800 p-2 rounded-lg border border-slate-700">
+                        <div class="text-slate-400 text-[10px]">ความชื้นในดินเฉลี่ย</div>
+                        <div class="text-base font-bold text-blue-400">42%</div>
+                    </div>
+                    <div class="bg-slate-800 p-2 rounded-lg border border-slate-700">
+                        <div class="text-slate-400 text-[10px]">ผลผลิตคาดการณ์รวม</div>
+                        <div class="text-base font-bold text-yellow-500">850 ตัน</div>
+                    </div>
+                </div>
+
+                <div id="mockupGraph" class="bg-slate-800 p-2 rounded-lg border border-slate-700 opacity-40 transition-all duration-300 flex flex-col gap-2">
+                    <span class="font-semibold text-slate-300"><i class="fa-solid fa-chart-line text-emerald-400 mr-1"></i> แนวโน้ม NDVI & Soil Moisture</span>
+                    <div class="h-28 relative">
+                        <canvas id="mockChart"></canvas>
+                    </div>
+                    <div class="bg-slate-850 p-2 rounded border-l-2 border-emerald-500 text-[10px] text-slate-300">
+                        <strong class="text-emerald-400"><i class="fa-solid fa-lightbulb mr-1"></i> AI Recommendation:</strong> ความชื้นในโซน B ต่ำกว่าเกณฑ์ ควรเปิดระบบน้ำหยดล่วงหน้า 2 ชั่วโมง
+                    </div>
+                </div>
+
+                <div id="mockupReport" class="bg-slate-800 p-2 rounded-lg border border-slate-700 opacity-40 transition-all duration-300 flex flex-col gap-1">
+                    <div class="flex justify-between items-center text-slate-300 font-semibold mb-1">
+                        <span><i class="fa-solid fa-file-invoice text-emerald-400 mr-1"></i> Executive Summary Report</span>
+                        <button class="bg-slate-700 hover:bg-slate-600 text-[9px] px-1.5 py-0.5 rounded transition"><i class="fa-solid fa-print"></i> พิมพ์</button>
+                    </div>
+                    <div class="bg-white text-slate-900 p-2 rounded text-[10px] flex flex-col gap-1 shadow-inner font-mono">
+                        <div class="font-bold border-b border-slate-200 pb-0.5 text-center text-[9px]">AGRI-LANDQ REPORT 2026</div>
+                        <div><strong>Summary:</strong> ภาพรวมการเจริญเติบโตของพืชอยู่ในเกณฑ์ดีเยี่ยม</div>
+                        <div><strong>Findings:</strong> พบพื้นที่เสี่ยงขาดน้ำ 12% ในเขตแปลงฝั่งตะวันตก</div>
+                        <div><strong>Recommendations:</strong> เร่งปรับรอบการจ่ายน้ำเพื่อรักษาเสถียรภาพผลผลิต</div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Global State
+        let currentStep = 1;
+        const totalSteps = 7;
+        let mapInitialized = false;
+        let chartInstance = null;
+        
+        // Notes Storage Object
+        const workshopNotes = {
+            step1: '', step2: '', step3: '', step4: '', step5: '', step6: '', reflection: ''
+        };
+
+        // Static Workshop Dataset 
+        const stepsData = {
+            1: {
+                title: "รู้จักองค์ประกอบของ LandQ",
+                desc: "ทำความเข้าใจสถาปัตยกรรมและการไหลของข้อมูล (Data Flow) ในระบบ LandQ ก่อนเริ่มสร้างต้นแบบ",
+                isIntro: true
+            },
+            2: {
+                title: "สร้าง Dashboard Layout",
+                objective: "ผู้เรียนสามารถใช้ AI เจนเนอเรตโครงสร้างและหน้ากากหลัก (UI Layout) ของ Web Application ที่แบ่งสัดส่วนชัดเจนได้",
+                prompt: `ช่วยเขียน Code Single HTML File สำหรับทำหน้า Dashboard ด้านการบริหารจัดการการเกษตรอัจฉริยะ (Agri-Dashboard) โดยใช้โครงสร้าง Tailwind CSS มีข้อกำหนดดังนี้:
+1. มี Header ด้านบนสุดแสดงชื่อระบบ "Agri-LandQ Dashboard" พร้อมสัญลักษณ์สวยงาม
+2. มี Sidebar ฝั่งซ้ายสำหรับเมนูหลัก เช่น "ภาพรวมแปลง", "วิเคราะห์ NDVI", "รายงานสรุป"
+3. มีพื้นที่หลัก (Main Dashboard Area) ตรงกลางที่เตรียมไว้สำหรับใส่แผนที่ การ์ดข้อมูล และกราฟ
+4. ใช้ดีไซน์สไตล์ Modern Dark Mode คล้ายแพลตฟอร์ม GIS มืออาชีพ
+5. โค้ดทั้งหมดต้องรวมอยู่ในไฟล์เดียว (HTML, CSS โหลดจาก CDN) ไม่ต้องใช้ไฟล์แยก`,
+                expected: "โครงสร้างหน้าเว็บเปล่าสไตล์ Dashboard ที่มีเมนูด้านข้างและพื้นที่แสดงผลหลัก แบ่งสัดส่วนอย่างสวยงาม",
+                targetMockup: ["mockupLayout"]
+            },
+            3: {
+                title: "เพิ่มแผนที่ GIS",
+                objective: "เรียนรู้วิธีการฝังแผนที่ฐาน (Base Map) แบบ Interactive และการปักหมุดตำแหน่งพิกัดแปลงลงบนเว็บแอปพลิเคชัน",
+                prompt: `จากโค้ด HTML Dashboard ก่อนหน้านี้ ให้เพิ่มระบบแผนที่ GIS ในพื้นที่ Main Dashboard Area ด้วย Leaflet.js (โหลดผ่าน CDN ทั้ง CSS และ JS):
+1. ตั้งค่าแผนที่เริ่มต้นให้ซูมเข้าที่พิกัดแปลงเกษตรตัวอย่างในไทย (เช่น ละติจูด 14.0, ลองจิจูด 100.5)
+2. ใช้แผนที่ฐานจาก OpenStreetMap หรือแผนที่ดาวเทียมที่สวยงาม
+3. เพิ่มตัวอย่างแปลงเกษตร 1 แปลง (ปักหมุด Marker หรือวาด Polygon สี่เหลี่ยมแทนพื้นที่แปลง)
+4. เมื่อคลิกที่แปลงเกษตร ให้มี Popup แสดงข้อความ "รหัสแปลง: AGRI-001 | พืช: ข้าวโพดหวาน"`,
+                expected: "แผนที่โลกแบบเลื่อนและซูมได้โผล่ขึ้นมาตรงกลาง Dashboard พร้อมมีหมุดพิกัดแปลงเกษตรที่กดดูรายละเอียดได้",
+                targetMockup: ["mockupLayout", "mockupMapContainer"]
+            },
+            4: {
+                title: "เพิ่ม KPI Cards",
+                objective: "สามารถออกแบบการดึงสถิติตัวเลขสำคัญมาแสดงผลในรูปแบบการ์ดสรุปผล (Key Performance Indicators) ที่เข้าใจง่าย",
+                prompt: `ในหน้า Dashboard เดิม ให้เพิ่มส่วนแสดงผล KPI Cards จำนวน 4 การ์ด ไว้ที่ด้านบนของพื้นที่แสดงผลหลัก (แถวเหนือแผนที่หรือข้างๆ แผนที่) โดยออกแบบให้ดูทันสมัย ประกอบด้วยข้อมูลดังนี้:
+1. พื้นที่เพาะปลูกทั้งหมด (ค่าตัวเลข: 1,240 ไร่) พร้อมไอคอนไอคอนฟาร์ม
+2. ค่า NDVI เฉลี่ย (ค่าตัวเลข: 0.68) แสดงเป็นข้อความเน้นสีเขียว
+3. ความชื้นในดินเฉลี่ย (ค่าตัวเลข: 42%) พร้อมไอคอนรูปหยดน้ำ
+4. ผลผลิตคาดการณ์รวม (ค่าตัวเลข: 850 ตัน) พร้อมไอคอนรูปกล่องสินค้า`,
+                expected: "กล่องข้อมูล 4 กล่องเรียงกันสวยงาม มีการเน้นตัวเลขขนาดใหญ่และมีไอคอนกำกับชัดเจนบอกสถานะฟาร์ม",
+                targetMockup: ["mockupLayout", "mockupMapContainer", "mockupKPI"]
+            },
+            5: {
+                title: "เพิ่มกราฟและ Insight",
+                objective: "ฝึกฝนการใช้ AI เชื่อมต่อไลบรารีกราฟเพื่อแสดงแนวโน้มข้อมูลของแปลงเพาะปลูก พร้อมทำกล่องให้คำแนะนำอัตโนมัติ",
+                prompt: `ปรับปรุงหน้า Dashboard เพิ่มเติมโดยใช้ Chart.js เพื่อสร้างกราฟและกล่อง Insight:
+1. เพิ่มกราฟเส้น (Line Chart) แสดงแนวโน้มค่า NDVI และความชื้นในดิน (Soil Moisture Trend) ย้อนหลัง 7 วัน ในพื้นที่ถัดจากแผนที่
+2. ปรับแต่งสีกราฟให้เข้ากับธีม Dark Mode ของระบบ
+3. เพิ่มแถบกล่องข้อความอัจฉริยะด้านล่างกราฟ (AI Recommendation Panel) แสดงคำแนะนำเชิงรุก เช่น "คำแนะนำจาก AI: ค่าความชื้นในโซน B ลดลงผิดปกติ แนะนำให้รอบการจ่ายน้ำเพิ่มขึ้น 15 นาที"`,
+                expected: "กราฟเส้นแสดงข้อมูลผันแปรย้อนหลังที่ดูเป็นมืออาชีพ พร้อมมีกล่องแจ้งเตือนคำแนะนำที่เป็นประโยชน์จำลองจาก AI",
+                targetMockup: ["mockupLayout", "mockupMapContainer", "mockupKPI", "mockupGraph"]
+            },
+            6: {
+                title: "สร้าง Executive Report",
+                objective: "เข้าใจการสร้างโมดูลออกรายงานสรุปสำหรับผู้บริหาร พร้อมฟังก์ชันที่สามารถสั่งพิมพ์หรือบันทึกเป็น PDF ได้ง่าย",
+                prompt: `ขั้นตอนสุดท้าย ให้เพิ่มปุ่ม "พิมพ์รายงานสรุป (Print Report)" ในหน้า Dashboard:
+1. เมื่อคลิกปุ่มจะเปิดกล่องเอกสารรายงานสรุปสำหรับผู้บริหาร (Executive Report)
+2. โครงสร้างรายงานประกอบด้วย 3 หัวข้อหลัก: 1) Executive Summary, 2) Key Findings (เช่น จุดที่แล้งหรือพืชสมบูรณ์), 3) Strategic Recommendations
+3. เขียนสไตล์ CSS @media print เพิ่มเติม เพื่อให้เวลาผู้ใช้งานกดปุ่มพิมพ์ ระบบจะจัดหน้ากระดาษพิมพ์เฉพาะส่วนเนื้อหารายงานออกมาเป็น A4 ได้อย่างสวยงาม ไม่ติดแถบเมนูข้างนอก`,
+                expected: "ปุ่มพิมพ์รายงานที่สร้างเอกสารสรุปขึ้นมาพิมพ์เป็นกระดาษหรือบันทึก PDF ทันทีผ่านฟังก์ชันของบราวเซอร์",
+                targetMockup: ["mockupLayout", "mockupMapContainer", "mockupKPI", "mockupGraph", "mockupReport"]
+            },
+            7: {
+                title: "ปรับแต่งให้เป็นระบบของตนเอง",
+                desc: "ยินดีด้วย! คุณได้เรียนรู้ Pipeline การสร้างต้นแบบ Mini LandQ ด้วย AI แล้ว ตอนนี้เป็นเวลาสรุปบทเรียนและแนวคิดการนำไปประยุกต์ใช้งานในหน่วยงานของคุณ",
+                isReflection: true
+            }
+        };
+
+        // Render Sidebar Menu
+        function renderSidebar() {
+            const sidebar = document.getElementById('sidebarSteps');
+            sidebar.innerHTML = '';
+            
+            for (let i = 1; i <= totalSteps; i++) {
+                const isActive = currentStep === i;
+                const step = stepsData[i];
+                
+                const btn = document.createElement('button');
+                btn.onclick = () => changeStep(i);
+                btn.className = `w-full text-left p-3 rounded-xl transition flex items-start gap-3 border ${
+                    isActive 
+                    ? 'bg-emerald-50 border-emerald-200 text-emerald-900 font-medium shadow-sm' 
+                    : 'bg-transparent border-transparent hover:bg-slate-50 text-slate-600'
+                }`;
+                
+                btn.innerHTML = `
+                    <span class="flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold mt-0.5 ${
+                        isActive ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'
+                    }">${i}</span>
+                    <div class="flex-1">
+                        <div class="text-xs font-bold uppercase tracking-wider ${isActive ? 'text-emerald-700' : 'text-slate-400'}">Step 0${i}</div>
+                        <div class="text-sm truncate max-w-[180px]">${step.title}</div>
+                    </div>
+                `;
+                sidebar.appendChild(btn);
+            }
+        }
+
+        // Handle Active Mockup Highlights based on current step
+        function updateMockupHighlight() {
+            const allMockups = ["mockupLayout", "mockupMapContainer", "mockupKPI", "mockupGraph", "mockupReport"];
+            
+            // Default reset
+            allMockups.forEach(id => {
+                const el = document.getElementById(id);
+                if(el) el.style.opacity = "0.2";
+            });
+
+            if (currentStep === 1) {
+                // Intro shows everything dim out or slight view
+                allMockups.forEach(id => document.getElementById(id).style.opacity = "0.3");
+            } else if (currentStep === 7) {
+                // Final step highlights the full target platform
+                allMockups.forEach(id => document.getElementById(id).style.opacity = "1");
+            } else {
+                // Highlight specific components built in this step
+                const activeTargets = stepsData[currentStep].targetMockup || [];
+                activeTargets.forEach(id => {
+                    const el = document.getElementById(id);
+                    if(el) el.style.opacity = "1";
+                });
+            }
+        }
+
+        // Change Active Step View
+        function changeStep(stepNumber) {
+            if (stepNumber < 1 || stepNumber > totalSteps) return;
+            
+            // Save current notes value before switching
+            saveCurrentNoteState();
+
+            currentStep = stepNumber;
+            
+            // UI Updates
+            renderSidebar();
+            updateProgressBar();
+            renderStepContent();
+            updateMockupHighlight();
+            
+            // Handle Mock Apps triggers
+            if(currentStep >= 3 && mapInitialized === false) {
+                setTimeout(initMockMap, 200); // Delayed to allow DOM updates
+            }
+            if(currentStep >= 5) {
+                setTimeout(initMockChart, 200);
+            }
+        }
+
+        function saveCurrentNoteState() {
+            const noteArea = document.getElementById('noteArea');
+            if (noteArea) {
+                const activeKey = currentStep === 7 ? 'reflection' : `step${currentStep}`;
+                workshopNotes[activeKey] = noteArea.value;
+            }
+        }
+
+        function updateProgressBar() {
+            const percent = (currentStep / totalSteps) * 100;
+            document.getElementById('progressBar').style.width = `${percent}%`;
+            document.getElementById('progressText').innerText = `Step ${currentStep} / ${totalSteps} (${Math.round(percent)}%)`;
+            
+            // Footer buttons state
+            document.getElementById('btnPrev').disabled = currentStep === 1;
+            
+            const nextBtn = document.getElementById('btnNext');
+            if(currentStep === totalSteps) {
+                nextBtn.innerHTML = `<i class="fa-solid fa-file-export mr-1"></i> สรุปและดาวน์โหลด`;
+                nextBtn.className = "px-5 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition shadow-sm";
+                nextBtn.onclick = exportWorkbookData;
+            } else {
+                nextBtn.innerHTML = `ถัดไป <i class="fa-solid fa-arrow-right ml-1"></i>`;
+                nextBtn.className = "px-5 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition shadow-sm";
+                nextBtn.onclick = () => changeStep(currentStep + 1);
+            }
+        }
+
+        // Copy Functionality
+        function copyText(elementId, btnId) {
+            const textToCopy = document.getElementById(elementId).innerText;
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const btn = document.getElementById(btnId);
+                const originalHTML = btn.innerHTML;
+                btn.innerHTML = `<i class="fa-solid fa-check mr-1"></i> คัดลอกแล้ว!`;
+                btn.classList.replace('bg-slate-800', 'bg-emerald-600');
+                btn.classList.replace('hover:bg-slate-700', 'hover:bg-emerald-700');
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalHTML;
+                    btn.classList.replace('bg-emerald-600', 'bg-slate-800');
+                    btn.classList.replace('hover:bg-emerald-700', 'hover:bg-slate-700');
+                }, 200);
+            });
+        }
+
+        // HTML Content Generation for Steps
+        function renderStepContent() {
+            const container = document.getElementById('stepContent');
+            const data = stepsData[currentStep];
+            const currentNoteVal = currentStep === 7 ? workshopNotes.reflection : workshopNotes[`step${currentStep}`];
+
+            if (data.isIntro) {
+                // SECTION 2: LandQ Architecture UI View
+                container.innerHTML = `
+                    <div class="animate-fadeIn">
+                        <span class="text-xs font-bold text-emerald-600 uppercase tracking-wide bg-emerald-50 px-2 py-1 rounded">SECTION 2</span>
+                        <h2 class="text-xl font-bold mt-2 text-slate-800">${data.title}</h2>
+                        <p class="text-sm text-slate-600 mt-2">${data.desc}</p>
+                        
+                        <div class="my-6 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                            <h3 class="text-xs font-bold text-slate-400 uppercase mb-4 tracking-wider text-center">LandQ System Data Architecture</h3>
+                            
+                            <div class="flex flex-col items-center gap-2">
+                                <div class="w-full max-w-[280px] bg-white p-2.5 rounded-lg border border-slate-200 shadow-sm flex items-center gap-3">
+                                    <div class="bg-blue-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-xs"><i class="fa-solid fa-database"></i></div>
+                                    <div><div class="font-bold text-xs">Data Component</div><p class="text-[10px] text-slate-500">ข้อมูลแปลงเกษตร พิกัดแปลง และสถิติต่างๆ</p></div>
+                                </div>
+                                <div class="text-slate-400 text-xs"><i class="fa-solid fa-arrow-down"></i></div>
+                                
+                                <div class="w-full max-w-[280px] bg-white p-2.5 rounded-lg border border-slate-200 shadow-sm flex items-center gap-3">
+                                    <div class="bg-emerald-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-xs"><i class="fa-solid fa-map-location-dot"></i></div>
+                                    <div><div class="font-bold text-xs">Map Component</div><p class="text-[10px] text-slate-500">แสดงขอบเขตพื้นที่แปลงเชิงลึกด้วย GIS</p></div>
+                                </div>
+                                <div class="text-slate-400 text-xs"><i class="fa-solid fa-arrow-down"></i></div>
+
+                                <div class="w-full max-w-[280px] bg-white p-2.5 rounded-lg border border-slate-200 shadow-sm flex items-center gap-3">
+                                    <div class="bg-purple-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-xs"><i class="fa-solid fa-chart-pie"></i></div>
+                                    <div><div class="font-bold text-xs">Dashboard Component</div><p class="text-[10px] text-slate-500">รวมรวมข้อมูลเป็นหน้ากากจัดการภาพรวม</p></div>
+                                </div>
+                                <div class="text-slate-400 text-xs"><i class="fa-solid fa-arrow-down"></i></div>
+
+                                <div class="w-full max-w-[280px] bg-white p-2.5 rounded-lg border border-slate-200 shadow-sm flex items-center gap-3">
+                                    <div class="bg-yellow-500 text-slate-900 w-8 h-8 rounded-full flex items-center justify-center text-xs"><i class="fa-solid fa-brain"></i></div>
+                                    <div><div class="font-bold text-xs">Insight Component</div><p class="text-[10px] text-slate-500">ระบบประมวลผลให้คำแนะนำอัจฉริยะ</p></div>
+                                </div>
+                                <div class="text-slate-400 text-xs"><i class="fa-solid fa-arrow-down"></i></div>
+
+                                <div class="w-full max-w-[280px] bg-white p-2.5 rounded-lg border border-slate-200 shadow-sm flex items-center gap-3">
+                                    <div class="bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center text-xs"><i class="fa-solid fa-file-contract"></i></div>
+                                    <div><div class="font-bold text-xs">Report Component</div><p class="text-[10px] text-slate-500">จัดส่งรายงานสรุปสำหรับการวางแผนบริหาร</p></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1"><i class="fa-solid fa-pen-to-square"></i> บันทึกความเข้าใจเกี่ยวกับสถาปัตยกรรมของ LandQ</label>
+                            <textarea id="noteArea" placeholder="พิมพ์บันทึกสั้นๆ ที่ได้เรียนรู้จากองค์ประกอบในส่วนนี้..." class="w-full h-20 p-2.5 text-sm bg-slate-55 rounded-lg border border-slate-200 focus:ring-2 focus:ring-emerald-500 focus:outline-none transition resize-none">${currentNoteVal}</textarea>
+                        </div>
+                    </div>
+                `;
+            } else if (data.isReflection) {
+                // SECTION 6: Reflection UI View
+                container.innerHTML = `
+                    <div class="animate-fadeIn flex flex-col h-full">
+                        <span class="text-xs font-bold text-blue-600 uppercase tracking-wide bg-blue-50 px-2 py-1 rounded">SECTION 6: Reflection</span>
+                        <h2 class="text-xl font-bold mt-2 text-slate-800">${data.title}</h2>
+                        <p class="text-sm text-slate-600 mt-2">${data.desc}</p>
+
+                        <div class="mt-6 bg-blue-50/50 p-4 rounded-xl border border-blue-100 flex-1">
+                            <label class="block text-sm font-semibold text-slate-800 mb-2">
+                                <i class="fa-solid fa-circle-question text-blue-600 mr-1"></i> หากคุณจะสร้าง LandQ สำหรับองค์กรหรือภารกิจของคุณเอง คุณจะสร้างระบบวิเคราะห์หรือแสดงผลข้อมูลอะไร?
+                            </label>
+                            <textarea id="noteArea" placeholder="ตัวอย่างเช่น: อยากสร้างระบบ LandQ ติดตามพื้นที่ป่าชุมชนเพื่อเฝ้าระวังไฟป่าร่วมกับข้อมูลทิศทางลม / หรือระบบแสดงผลโฉนดที่ดินเพื่อการประเมินภาษี..." class="w-full h-44 p-3 text-sm bg-white rounded-lg border border-slate-200 focus:ring-2 focus:ring-blue-500 focus:outline-none transition shadow-inner">${currentNoteVal}</textarea>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // SECTION 4: Prompt Pipeline Builder View
+                container.innerHTML = `
+                    <div class="animate-fadeIn flex flex-col gap-4">
+                        <div>
+                            <span class="text-xs font-bold text-emerald-600 uppercase tracking-wide bg-emerald-50 px-2 py-1 rounded">STEP 0${currentStep} Pipeline</span>
+                            <h2 class="text-xl font-bold mt-1 text-slate-800">${data.title}</h2>
+                        </div>
+                        
+                        <div class="text-xs bg-slate-50 p-2.5 rounded-lg border border-slate-200 text-slate-600">
+                            <strong class="text-slate-800"><i class="fa-solid fa-bullseye text-emerald-600 mr-1"></i> วัตถุประสงค์การเรียนรู้:</strong> ${data.objective}
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="text-xs font-bold text-slate-500 uppercase tracking-wider"><i class="fa-solid fa-terminal"></i> AI Prompt Template</label>
+                                <button id="btnCopyPrompt" onclick="copyText('promptBoxContent', 'btnCopyPrompt')" class="text-xs bg-slate-800 hover:bg-slate-700 text-white px-2.5 py-1 rounded-md transition flex items-center gap-1 shadow-sm">
+                                    <i class="fa-solid fa-copy"></i> คัดลอก Prompt
+                                </button>
+                            </div>
+                            <div class="bg-slate-900 rounded-lg p-3 text-slate-200 text-xs font-mono select-all overflow-x-auto max-h-40 border border-slate-800 custom-scrollbar whitespace-pre-wrap" id="promptBoxContent">${data.prompt}</div>
+                        </div>
+
+                        <div class="text-xs bg-emerald-50/50 p-2.5 rounded-lg border border-emerald-100/80 text-emerald-950">
+                            <strong><i class="fa-solid fa-circle-info text-emerald-600 mr-1"></i> ผลลัพธ์ที่คาดหวัง:</strong> ${data.expected}
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-1"><i class="fa-solid fa-notes-medical"></i> บันทึกช่วยจำ / ข้อสังเกตขณะ Prompt ทำงาน</label>
+                            <textarea id="noteArea" placeholder="ระบุสิ่งที่พบ ปัญหาที่พบ หรือไอเดียเพิ่มเติมจากการกดรันโค้ดที่นี่..." class="w-full h-16 p-2 text-xs bg-white rounded-lg border border-slate-200 focus:ring-2 focus:ring-emerald-500 focus:outline-none transition resize-none shadow-inner">${currentNoteVal}</textarea>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Initialize Mock Map in Preview Frame
+        function initMockMap() {
+            if (mapInitialized) return;
+            try {
+                const map = L.map('mockMap', {
+                    zoomControl: false,
+                    attributionControl: false
+                }).setView([14.01, 100.52], 12);
+
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+                
+                // Add mockup polygon area
+                const polygon = L.polygon([
+                    [14.02, 100.50],
+                    [14.04, 100.51],
+                    [14.03, 100.53],
+                    [14.01, 100.52]
+                ], {
+                    color: '#10b981',
+                    fillColor: '#34d399',
+                    fillOpacity: 0.4
+                }).addTo(map);
+
+                polygon.bindPopup("<div class='text-xs font-sans text-slate-900'><b>รหัสแปลง:</b> AGRI-001<br><b>พืชหลัก:</b> ข้าวโพดหวาน</div>");
+                mapInitialized = true;
+            } catch (e) {
+                console.log("Map initialization waiting for visible container layout");
+            }
+        }
+
+        // Initialize Mock Chart in Preview Frame
+        function initMockChart() {
+            if (chartInstance) return;
+            const ctx = document.getElementById('mockChart');
+            if (!ctx) return;
+            
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'NDVI Index',
+                        data: [0.62, 0.63, 0.65, 0.64, 0.68, 0.67, 0.68],
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.3,
+                        yAxisID: 'y',
+                    }, {
+                        label: 'Soil Moisture (%)',
+                        data: [50, 48, 47, 43, 41, 42, 42],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.3,
+                        yAxisID: 'y1',
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#94a3b8', font: { size: 9 } }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: false,
+                            position: 'left',
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: false,
+                            position: 'right',
+                        }
+                    }
+                }
+            });
+        }
+
+        // SECTION 7: Export to TXT Document Function
+        function exportWorkbookData() {
+            saveCurrentNoteState(); // Ensure last page is captured
+            
+            let txtContent = `==================================================\n`;
+            txtContent += `          AI BUILD WORKBOOK SUMMARY REPORT        \n`;
+            txtContent += `                 GeoAI Bootcamp 2026              \n`;
+            txtContent += `==================================================\n\n`;
+            
+            txtContent += `[Step 1: รู้จักองค์ประกอบของ LandQ]\n`;
+            txtContent += `Notes: ${workshopNotes.step1 || 'ไม่มีบันทึกข้อมูล'}\n\n`;
+            
+            txtContent += `[Step 2: สร้าง Dashboard Layout]\n`;
+            txtContent += `Notes: ${workshopNotes.step2 || 'ไม่มีบันทึกข้อมูล'}\n\n`;
+            
+            txtContent += `[Step 3: เพิ่มแผนที่ GIS]\n`;
+            txtContent += `Notes: ${workshopNotes.step3 || 'ไม่มีบันทึกข้อมูล'}\n\n`;
+            
+            txtContent += `[Step 4: เพิ่ม KPI Cards]\n`;
+            txtContent += `Notes: ${workshopNotes.step4 || 'ไม่มีบันทึกข้อมูล'}\n\n`;
+            
+            txtContent += `[Step 5: เพิ่มกราฟและ Insight]\n`;
+            txtContent += `Notes: ${workshopNotes.step5 || 'ไม่มีบันทึกข้อมูล'}\n\n`;
+            
+            txtContent += `[Step 6: สร้าง Report]\n`;
+            txtContent += `Notes: ${workshopNotes.step6 || 'ไม่มีบันทึกข้อมูล'}\n\n`;
+            
+            txtContent += `==================================================\n`;
+            txtContent += `SECTION 6: REFLECTION\n`;
+            txtContent += `==================================================\n`;
+            txtContent += `แนวคิดการสร้าง LandQ สำหรับองค์กรของคุณ:\n`;
+            txtContent += `${workshopNotes.reflection || 'ไม่มีข้อมูลบันทึกความสะท้อนคิด'}\n\n`;
+            txtContent += `==================================================\n`;
+            txtContent += `ดาวน์โหลด ณ วันที่: ${new Date().toLocaleString('th-TH')}\n`;
+            txtContent += `จบหลักสูตรต้นแบบการเรียนรู้ด้วย AI - ขอให้สนุกกับการนำไปต่อยอดประโยชน์เชิงพื้นที่ครับ!`;
+
+            const blob = new Blob([txtContent], { type: 'text/plain;charset=utf-8;' });
+            const link = document.createElement("a");
+            
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", "GeoAI_Workshop_Notes_Summary.txt");
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+
+        // Kickstart system layout view
+        changeStep(1);
+    </script>
+</body>
+</html>
